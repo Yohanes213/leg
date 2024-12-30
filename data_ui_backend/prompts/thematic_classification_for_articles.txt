@@ -1,0 +1,267 @@
+Extract thematic metadata from a legal article to enrich legal knowledge graphs and improve filtering mechanisms. Focus on thematic classification, keywords, and mapping to legal ontology classes.
+
+From the provided legal text, extract the following metadata:
+
+1. **Thematic Classification**
+  - Identify the overarching theme of the article.
+  - Classify the article into hierarchical primary categories and subcategories, adhering to legal taxonomies.
+
+2. **Keywords**
+  - Extract a list of keywords or phrases capturing core subjects, actions, or entities in the text.
+  - Provide these keywords as an array of strings for indexing and semantic search.
+
+This are the list of categories to select and create the categories:
+
+[
+              {
+                  "primary": "Civil Law Agent (Civil Law)",
+                  "secondary": [
+                      "Bonds and Contracts",
+                      "Civil Liability",
+                      "Real Rights",
+                      "Successioni",
+                      "Consumer Protection (in civil matters)"
+                  ],
+                  "tertiary": [
+                      "Sources of obligations (law, contract, unlawful act, unjust enrichment)",
+                      "Typical contracts (sale, procurement, rental, mandate, surety, insurance)",
+                      "Atypical and modern contracts (franchising, leasing, factoring, e-commerce)",
+                      "Formation, interpretation and execution of the contract (defects of consent, abusive clauses, rescission, resolution, withdrawal)",
+                      "Protection of the weaker contractor and consumer protection in private law",
+                      "Contractual and extra-contractual liability",
+                      "Civil wrong, fault, fraud, criteria for attributing damages",
+                      "Professional liability (health, legal, technical)",
+                      "Liability of the manufacturer and for things in custody",
+                      "Liquidation of damages and compensation",
+                      "Property (purchase, protection, limits, expropriation for public utility)",
+                      "Real rights of enjoyment (usufruct, easement, use, habitation)",
+                      "Real rights of guarantee (pledge, mortgage)",
+                      "Possession and detention (possessory protection, effects, adverse possession)",
+                      "Legitimate, testamentary and necessary succession",
+                      "Capacity to succeed, unworthiness, legacies",
+                      "Succession agreements, division of inheritance, collation",
+                      "Reduction actions, protection of legitimate heirs",
+                      "Consumer contracts (sales, services, distance contracts)",
+                      "Legal guarantee, conventional guarantees",
+                      "Abusive clauses, unfair commercial practices in the contractual context",
+                      "Alternative dispute resolution (ADR, mediation)"
+                  ]
+              },
+              {
+                  "primary": "Criminal Law Agent (Criminal Law)",
+                  "secondary": [
+                      "Crimes against the Person",
+                      "Crimes against Property",
+                      "Crimes against Public Administration",
+                      "Computer Crimes",
+                      "Criminal Procedure and Precautionary Measures"
+                  ],
+                  "tertiary": [
+                      "Murder, injuries, beatings",
+                      "Crimes against personal freedom (kidnapping, trafficking)",
+                      "Sexual violence, stalking, domestic abuse",
+                      "Theft, robbery, extortion",
+                      "Fraud, embezzlement, usury",
+                      "Damage, cyber crime on assets",
+                      "Corruption, extortion, embezzlement",
+                      "Abuse of office, omission of official duties",
+                      "Financial crimes against the public interest",
+                      "Unauthorized access to computer systems, hacking",
+                      "Computer fraud, phishing, digital identity theft",
+                      "Spread of malware, cyberstalking, cyberbullying",
+                      "Preliminary investigations, referral to trial, trial",
+                      "Personal precautionary measures (custody, house arrest), real precautionary measures (seizures)",
+                      "Appeals, appeals, cassation, criminal enforcement"
+                  ]
+              },
+              {
+                  "primary": "Labor Law Agent",
+                  "secondary": [
+                      "Subordinate and Self-Employment Relationship",
+                      "Safety at Work",
+                      "Industrial and Trade Union Relations",
+                      "Social Security and Assistance"
+                  ],
+                  "tertiary": [
+                      "Employment contracts (permanent, fixed-term, apprenticeship, agency)",
+                      "Rights, duties, tasks, disciplinary power",
+                      "Flexible work (part-time, smart working)",
+                      "Accident prevention, hygiene and health",
+                      "Employer's responsibility, RSPP, RLS",
+                      "Sanctions and supervision (labour inspectorate)",
+                      "Freedom of association, collective bargaining",
+                      "Strike, lockout, conflict cooling procedure",
+                      "Trade union representatives, framework agreements",
+                      "Social insurance (INPS, INAIL)",
+                      "Unemployment, sickness benefit, maternity",
+                      "Pensions, severance pay, supplementary funds"
+                  ]
+              },
+              {
+                  "primary": "Administrative Law Agent (Administrative Law)",
+                  "secondary": [
+                      "Administrative Procedure and Documents",
+                      "Public Procurement and Public Administration Contracts",
+                      "Urban Planning and Construction",
+                      "Local Authorities and Decentralization",
+                      "Regulation of Public Sectors"
+                  ],
+                  "tertiary": [
+                      "General principles (L. 241/1990), transparency, participation",
+                      "Administrative acts (authorisations, concessions, licences)",
+                      "Access to documents, silent consent, self-protection",
+                      "Procurement code, public tender",
+                      "Service concessions, public-private partnerships",
+                      "Procurement litigation, anti-corruption, ANAC",
+                      "Urban planning, building permit, SCIA",
+                      "Land regulation, landscape constraints",
+                      "Building abuses, amnesty",
+                      "Municipalities, Provinces, Regions, Metropolitan Cities",
+                      "Regulatory and financial autonomy",
+                      "Local public services, transport, waste management",
+                      "Essential public services (health, education)",
+                      "Energy, public water, telecommunications",
+                      "Independent authorities, sectoral regulation"
+                  ]
+              },
+              {
+                  "primary": "Commercial and Corporate Law Agent",
+                  "secondary": [
+                      "Business and Entrepreneur",
+                      "Società e Corporate Governance",
+                      "Credit Securities and Financial Instruments",
+                      "Commercial and Distribution Contracts"
+                  ],
+                  "tertiary": [
+                      "Entrepreneur's statute, legal advertising (Business Register)",
+                      "Company, goodwill, trademark",
+                      "Family business, small business, innovative start-ups",
+                      "Partnerships, corporations, cooperatives",
+                      "Corporate bodies (assembly, board of directors, board of auditors)",
+                      "Merger, split, transformation, directors' liability",
+                      "Bills of exchange, cheques, bonds, shares",
+                      "Securities markets, Consob regulations",
+                      "Derivative instruments, stock exchange listings",
+                      "Agency, franchising, factoring contract",
+                      "International sales contracts (Vienna Convention)",
+                      "Joint ventures, business networks, distribution agreements"
+                  ]
+              },
+              {
+                  "primary": "Tax and Fiscal Law Agent",
+                  "secondary": [
+                      "Taxation",
+                      "Tax Procedure and Assessment",
+                      "Collection and Penalties"
+                  ],
+                  "tertiary": [
+                      "Direct taxes (IRPEF, IRES) and indirect taxes (VAT)",
+                      "Local taxes, excise duties, fees, duties",
+                      "Anti-evasion rules, transfer pricing, tax planning",
+                      "Tax returns, accounting obligations",
+                      "Investigations, sector studies, ISA",
+                      "Agreement, consultation, adhesion",
+                      "Tax bills, installment plans",
+                      "Administrative and criminal tax sanctions",
+                      "Tax litigation, Tax Commissions, Cassation"
+                  ]
+              },
+              {
+                  "primary": "Family Law Agent",
+                  "secondary": [
+                      "Marriage, Civil Unions and Cohabitation",
+                      "Filiation and Adoptions",
+                      "Separations and Divorces"
+                  ],
+                  "tertiary": [
+                      "Personal and patrimonial effects of marriage",
+                      "Property regimes (communion, separation of property)",
+                      "Civil unions, de facto cohabitation, cohabitation agreements",
+                      "Legitimate, natural filiation, recognition",
+                      "Parental responsibility, custody, child support",
+                      "National and international adoptions",
+                      "Consensual and judicial separation",
+                      "Divorce, economic effects, custody of minors",
+                      "Family mediation, changes to the conditions"
+                  ]
+              },
+              {
+                  "primary": "International Law Agent (International Law)",
+                  "secondary": [
+                      "Public International Law",
+                      "Private International Law",
+                      "European Union Law"
+                  ],
+                  "tertiary": [
+                      "Sources (treaties, custom, general principles)",
+                      "International organizations (UN, WTO, NATO)",
+                      "Human rights, law of the sea, international humanitarian law",
+                      "Conflicts of laws, recognition and enforcement of foreign judgments",
+                      "International contracts, international commercial arbitration",
+                      "Rules on jurisdiction and competence in cross-border matters",
+                      "Sources of EU law (Regulations, Directives, Decisions)",
+                      "Fundamental freedoms"
+                  ]
+              }
+
+          ]
+
+
+# Output Format
+
+Respond with the extracted metadata in the JSON structure:
+
+```json
+{
+  "thematic_classification": {
+    "primary_category": list,
+    "secondary_category": list,
+    "tertiary_category": list
+  },
+  "keywords": [
+    "keyword1",
+    "keyword2",
+    "keyword3"
+  ],
+
+}
+```
+
+# Guidelines for Extraction
+
+- Ensure all metadata is relevant and directly derived from the article.
+- Use hierarchical classifications and ontologies familiar to the legal domain.
+- Flag inferred relationships as "inferred."
+- Explicitly state "Not Mentioned" for missing elements.
+
+# Examples
+
+**Example Input:**
+
+"Article 12: Any individual entering the country must declare goods valued over €10,000. Failure to comply will result in fines or penalties as determined by customs authorities. This article applies to travelers entering the European Union and aligns with Directive 2018/843."
+
+**Example Output:**
+
+```json
+{
+  "thematic_classification": {
+    "primary_category": ["Administrative Law Agent (Administrative Law)"],
+    "secondary_category": ["Regulation of Public Sectors"],
+    "tertiary_category": ["Administrative Procedure and Documents","Collection and Penalties"]
+  },
+  "keywords": [
+    "declaration",
+    "goods",
+    "€10,000",
+    "fines",
+    "customs authorities",
+    "travelers"
+  ],
+
+}
+```
+
+# Notes
+
+- Focus on extracting precise metadata that supports enhanced search and filtering.
+- Handle missing elements appropriately by stating "Not Mentioned."
