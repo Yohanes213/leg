@@ -6,8 +6,18 @@ const PAGE_SIZE = 8;
 
 const ContextSchema = z.object({
   id: z.string(),
-  article_name: z.string(),
-  article_detail: z.string().optional(),
+  // article_name: z.string(),
+  // article_detail: z.string().optional(),
+  content: z.string().optional(), 
+    tags: z.string().optional(),// JSON string, can be parsed into a Tag object
+    metadata: z.string().optional(), // JSON string, can be parsed into Metadata object
+    description: z.string().optional(), 
+    date_to: z.string().optional(),  // ISO 8601 date string or null
+    category: z.string().optional(), // JSON string, can be parsed into a Category object
+    entry_to_force: z.string().optional(), // ISO 8601 date string
+    publication_date: z.string().optional(), // 
+    date: z.string().optional(), // ISO 8601 date string
+    hearing_date: z.string().optional(), // ISO 8601 date string
   // Add other context fields as needed
 });
 
@@ -16,7 +26,7 @@ const ContextMachineContextSchema = z.object({
   contexts: z.array(ContextSchema),
   currentPage: z.number(),
   totalContexts: z.number(),
-  filter: z.record(z.string(), z.string()).optional(),
+  filter: z.record(z.string(), z.number()).optional(),
   searchQuery: z.string().optional(),
   page: z.number().default(0),
   size: z.number().default(10),
@@ -101,20 +111,20 @@ export const contextMachine = setup({
       console.log(queryParams.toString(), "Quooooooooooooooery Parameters");
   
       try {
-          const response = await apiCall("POST", `/context?${queryParams.toString()}`);
+          const response = await apiCall("POST", `/random_articles?${queryParams.toString()}`);
   
           console.log("################ API Response ################");
           console.log(response);
   
           return {
-              contexts: response["queryResult"] || [],
-              totalContexts: response["totalcontexts"] || 0,
+              contexts: response["articles"] || [],
+              totalContexts: response["totalarticles"] || 0,
           };
       } catch (error) {
           console.error("Error Fetching Contexts:", error);
           return {
               contexts: [],
-              totalContexts: 0,
+              // totalContexts: 0,
           };
       }
   }),
@@ -166,6 +176,7 @@ export const contextMachine = setup({
             // entry: () => {
             //     console.log('contextMachine: Entered fetchingContexts state');
             //   },
+            
           invoke: {
             id: "contextsFetcher",
             // input: ({ context, event }) => ({
@@ -185,6 +196,14 @@ export const contextMachine = setup({
                 contexts: ({ event }) => event.output.contexts,
                 totalContexts: ({ event }) => event.output.totalContexts,
               }),
+              // target: "displayingContextsTable",
+              // actions: assign({
+              //   contexts: ({ event }) => {
+              //     console.log("onDone event", event);  // ADD THIS LINE
+              //     return event.output.contexts;
+              //   },
+              //   totalContexts: ({ event }) => event.output.totalContexts,
+              // }),
             },
             onError: {
               target: "#contextActor.idle",
@@ -200,6 +219,9 @@ export const contextMachine = setup({
           },
         },
         displayingContextsTable: {
+          entry: () => {
+            console.log('Entered displayingContextsTable state');
+          },
           on: {
             // "app.startManagingContexts": {
             //   target: "fetchingContexts",

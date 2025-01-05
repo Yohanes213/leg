@@ -17,6 +17,7 @@ from openai import OpenAI
 from urllib.parse import unquote
 from weaviate.classes.query import MetadataQuery
 from datetime import datetime
+import numpy as np
 
 load_dotenv()
 
@@ -76,7 +77,7 @@ app.add_middleware(
 #     #     "X-OpenAI-Api-Key": os.environ["OPENAI_APIKEY"]
 #     # }
 # )
-
+load_dotenv()
 weaviate_api_key = os.getenv('WEAVIATEAPI')
 
 
@@ -97,7 +98,9 @@ client = weaviate.connect_to_custom(
                 grpc_port="50051",
                 grpc_secure=False,
                 auth_credentials=auth_config,
-                headers=headers,
+                headers={
+                    "X-OpenAI-Api-Key": os.environ["OPENAIAPIKEY"]
+                },
                 additional_config=AdditionalConfig(
                     timeout=Timeout(init=30, query=60, insert=120),  # Increase timeouts if necessary
                 ),
@@ -132,14 +135,14 @@ with open("category_lists.json", "r") as f:
 with open("./prompts/thematic_classification_for_queries.txt", "r") as f:
     query_analyzer_prompt = f.read()
 
-with open("./prompts/thematic_classification_provided_by_domenico.txt", "r") as f:
-    query_analyzer_prompt_domenico = f.read()
+# with open("./prompts/thematic_classification_provided_by_domenico.txt", "r") as f:
+#     query_analyzer_prompt_domenico = f.read()
 
 with open("./prompts/question_generation.txt", "r") as f:
     question_generator_prompt =f.read()
 
-with open("./prompts/question_generation_by_domenico.txt", "r") as f:
-    question_generator_prompt_by_domenico =f.read()
+# with open("./prompts/question_generation_by_domenico.txt", "r") as f:
+#     question_generator_prompt_by_domenico =f.read()
 
 with open("./prompts/laws_classifier.txt", "r") as f:
     laws_classifier =f.read()
@@ -151,6 +154,347 @@ with open("./prompts/laws_classifier.txt", "r") as f:
 #         return {"message": "List of names retrieved successfully", "names": persons}
 #     except Exception as e:
 #         raise HTTPException(status_code=500, detail=str(e))
+
+
+
+vector_dimension = 1536
+
+
+
+
+# def fetch_random_articles(class_name: str = "National_articles", limit: int = 5) -> List[dict]:
+#     """Fetches a random number of articles using a random vector."""
+#     random_vector = list(np.random.rand(vector_dimension))
+#     collection = client.collections.get(class_name)
+#     try:
+#         response = (
+#             collection.query.near_vector(
+#                 near_vector=random_vector,
+#                 limit=limit,
+#             )
+#         )
+
+#         # articles = response.objects
+#         # print(f"Retrieved {len(articles)} articles.")
+
+#         # articles_as_dicts = [article.properties for article in articles]
+#         # # console.log()    
+#         # return articles_as_dicts
+#         articles = response.objects
+#         print(f"Retrieved {len(articles)} articles.")
+
+#         articles_as_dicts = []
+#         for article in articles:
+#             article_dict = article.properties
+#             article_dict["id"] = article.uuid  # Add the ID to the dictionary
+#             articles_as_dicts.append(article_dict)
+        
+#         return articles_as_dicts
+
+#     except Exception as e:
+#         print(f"Error fetching articles: {e}")
+#         raise HTTPException(status_code=500, detail=f"Error fetching articles: {e}")
+
+
+# @app.post("/random_articles")
+# async def get_random_articles(
+#         # collection: str = Query("National_articles", description="Name of the Weaviate collection"),
+#         # limit: int = Query(5, description="Number of articles to fetch")
+#         page: int = Query(1, ge=1, description="Page number for pagination, starts from 1"),
+#         size: int = Query(10, ge=1, description="Number of items per page, defaults to 10"),
+#         filter: str = Query(..., description="Filter JSON encoded as a string")
+# ):
+#     try:
+      
+      
+#       decoded_filter = unquote(filter)  
+#       parsed_filter = json.loads(decoded_filter)  
+    
+#       # Extract `query` and `fileFilter` from the filter
+#       query = parsed_filter.get("query")
+#       fileFilter = parsed_filter.get("database")
+#       if parsed_filter.get("region"):
+#             region = parsed_filter.get("region")
+      
+#       articles = fetch_random_articles(class_name=fileFilter, limit=int(query))
+#       return {"message": "List of articles retrieved successfully", 
+#               "articles": articles,
+#               "totalarticles": len(articles),
+#               "page": 1, #final_result["page"],
+#               "size": len(articles),
+#               }
+
+              
+#     # "query_result": final_result,
+#     #         "totalcontexts": len(final_result),
+#     except HTTPException as e:
+#        raise e
+#     except Exception as e:
+#        raise HTTPException(status_code=500, detail=str(e))
+    
+
+
+# vector_dimension = 1536
+# app = FastAPI()
+
+
+def fetch_random_articles(class_name: str, region: str = None) -> List[dict]:
+    """Fetches a random number of articles using a random vector, with optional region filtering."""
+    random_vector = list(np.random.rand(vector_dimension))
+    collection = client.collections.get(class_name)
+    try:
+        filters = None
+        if region:
+            filters = Filter.by_property("metadata").like(f'{{"Region": "{region}"}}')
+        
+
+        response = collection.query.near_vector(
+            near_vector=random_vector,
+            limit=1,
+            filters=filters
+        )
+
+         
+        #  response = query_builder.do()
+        
+        # response = query_builder.do()
+
+        articles = response.objects
+        print(f"Retrieved {len(articles)} articles.")
+
+        articles_as_dicts = []
+        for article in articles:
+            article_dict = article.properties
+            article_dict["id"] = article.uuid  # Add the ID to the dictionary
+            articles_as_dicts.append(article_dict)
+        
+        return articles_as_dicts
+
+    except Exception as e:
+        print(f"Error fetching articles: {e}")
+        raise HTTPException(status_code=500, detail=f"Error fetching articles: {e}")
+
+@app.post("/random_articles")
+async def get_random_articles(
+        page: int = Query(1, ge=1, description="Page number for pagination, starts from 1"),
+        size: int = Query(10, ge=1, description="Number of items per page, defaults to 10"),
+        filter: str = Query(..., description="Filter JSON encoded as a string")
+        # fileFilter, query, region
+):
+    try:
+      
+      decoded_filter = unquote(filter)  
+      parsed_filter = json.loads(decoded_filter)  
+    
+      # Extract `query`, `fileFilter` and `region` from the filter
+    #   query = parsed_filter.get("query")
+      fileFilter = parsed_filter.get("database")
+      region = None
+      if parsed_filter.get("region"):       
+            region = parsed_filter.get("region")
+
+
+      articles = fetch_random_articles(class_name=fileFilter, region=region)
+      return {"message": "List of articles retrieved successfully", 
+              "articles": articles,
+              "totalarticles": len(articles),
+              "page": 1, #final_result["page"],
+              "size": len(articles),
+              }
+
+    except HTTPException as e:
+       raise e
+    except Exception as e:
+       raise HTTPException(status_code=500, detail=str(e))
+
+
+
+
+# @app.post("/context/submit-feedback")
+# async def submit_feedback(data: FeedbackSchema):
+#     try:
+#         # queryId = str(hash(data.searchQuery))
+#         queryId = str(generate_uuid5(data.filterQuery.value + algorithm))
+#         feedbackId = str(int(time.time()))  
+#         print("ttttttttttttttttttttttttttt")
+#         feedback_data = {
+#             "queryId": queryId,  
+#             "feedbackId": feedbackId,  
+#             "feedback": data.feedback,  
+#             "ratings": [{"id": rating.id, "rating": rating.rating} for rating in data.ratings],
+#             "filterQuery": data.filterQuery.value,
+#             "selectedUser":data.selectedUser,
+#             "type": data.filterFile.feature,
+#             "feedbackType":data.feedbackType,
+#             "model": algorithm,
+#             "feedback_time": str(datetime.now().isoformat(timespec='seconds')) + "Z",
+#         }
+
+#         print("Feedback data to be saved:")
+#         print(feedback_data)  
+#         try:
+#             insert_feedback_details(feedback_data)
+#         except Exception as e:
+#             print(e)
+#             return {"message": "The Query already exists in database", "feedbackId": feedbackId, "queryId": queryId}
+#             # raise HTTPException(status_code=500, detail="Error saving feedback: The Query already exists in database")
+#             # print("Error occurred while saving feedback")
+
+#         return {"message": "Feedback submitted successfully", "feedbackId": feedbackId, "queryId": queryId}
+#     except Exception as e:
+#         print("Error occurred:", str(e))  
+#         raise HTTPException(status_code=500, detail="Error saving feedback: " + str(e))
+
+
+
+# def create_db_fields(data):
+#     fields = {'queryId', 'feedbackId', 'feedback', 'searchQuery','selectedUser'}
+#     result = {k: data[k] for k in fields & data.keys()}
+    
+#     if 'ratings' in data:
+#         result['ratings'] = json.dumps(data['ratings'])
+    
+#     return result
+
+
+# def insert_feedback_details(data):
+#     collection = client.collections.get("Context_feedback")
+#     data_obj = create_db_fields(data)
+#     collection.data.insert(
+#                 properties=data_obj,
+#                 uuid=data_obj["queryId"],
+#                 # vector=vectors[i]
+#             )
+
+
+
+
+
+
+
+
+class FeedbackItem(BaseModel):
+    id: str
+    issue: str
+    issue_tag: List[str]
+    feedback: str
+
+class FeedbackData(BaseModel):
+    feedback: str
+    ratings: List[FeedbackItem]
+    filterQuery: dict
+    selectedUser: str
+    filterFile: dict
+    model: str
+
+
+@app.post("/data_quality/submit-feedback")
+async def submit_feedback(feedback_data: FeedbackData):
+    try:
+        if not feedback_data.ratings or len(feedback_data.ratings) == 0 or not feedback_data.selectedUser or not feedback_data.model:
+          raise HTTPException(status_code=400, detail="Missing required fields in the request body")
+
+        className = client.collections.get("Data_quality_feedback_test1")
+
+        for feedback_item in feedback_data.ratings:
+          feedback_version = 'v1'
+          feedback_object = {
+                "ratings": {
+                   "issue": feedback_item.issue,
+                   "issue_tag": feedback_item.issue_tag,
+                   "feedback": feedback_item.feedback
+                },
+            "feedbackVersion": feedback_version,
+            "region": feedback_data.filterQuery.get("region"),
+            "feedback_time": datetime.now().strftime("%Y-%m-%dT%H:%M:%SZ"),
+            "selectedUser": feedback_data.selectedUser,
+            "collectionName": feedback_data.filterFile.get("feature", "National"),
+          }
+
+          className.data.insert(
+              uuid=generate_uuid5(feedback_object),
+              properties=feedback_object
+          )
+
+        return {"message": "Feedback submitted successfully"}
+    except Exception as e:
+       print(f"Error submitting feedback: {e}")
+       raise HTTPException(status_code=500, detail=f"Failed to submit feedback, {e}")
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+@app.post("/context")
+async def context_data(
+    page: int = Query(1, ge=1, description="Page number for pagination, starts from 1"),
+    size: int = Query(10, ge=1, description="Number of items per page, defaults to 10"),
+    filter: str = Query(..., description="Filter JSON encoded as a string")
+):   
+    try:
+        decoded_filter = unquote(filter)  
+        parsed_filter = json.loads(decoded_filter)  
+        
+        # Extract `query` and `fileFilter` from the filter
+        query = parsed_filter.get("query")
+        fileFilter = parsed_filter.get("database")
+        llm = parsed_filter.get("model", None)
+
+        # print("888888888888888888888888888888", query, fileFilter)
+        # if not query or not fileFilter:
+        #     raise HTTPException(status_code=400, detail="Filter must include 'query' and 'fileFilter' fields.")
+#, page=page, size=size
+        if not llm:
+            llm = "gpt-4o-mini"
+        args = {
+            "llm": llm,
+            "max_result": 20,
+            "specific_laws": True,
+            "query_expansion": True
+        }
+        print(args)
+
+        if fileFilter == "National":
+            final_result = search_by_vector(args, query)
+        elif fileFilter == "Case":
+            final_result = get_vector_similar_casefiles(args, query)
+        else:
+            final_result = search_by_vector(args, query)
+
+
+
+        return {
+            "message": "Data context successfully fetched",
+            "query_result": final_result,
+            "totalcontexts": len(final_result),
+            "page": 1, #final_result["page"],
+            "size": len(final_result), #final_result["size"]
+        }
+
+    except json.JSONDecodeError:
+        raise HTTPException(status_code=400, detail="Invalid filter format. Must be a valid JSON string.")
+    except Exception as e:
+        print(f"Error: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+
+
+
+
+
+
+
 
 @app.get("/names")
 async def get_names():
@@ -553,6 +897,7 @@ def create_db_fields(data):
         result['ratings'] = json.dumps(data['ratings'])
     
     return result
+
 
 def insert_feedback_details(data):
     collection = client.collections.get("Context_feedback")

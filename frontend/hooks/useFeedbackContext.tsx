@@ -15,7 +15,18 @@ interface FeedbackContextType {
   onCancel: () => void;
   onRatingChange: (articleId: string, rating: string) => void;
   setIsOpen: (isOpen: boolean) => void;
-  setListOfArticles:(listofArticles:{ id?: string; article_name?: string; article_detail?: string }[]) => void;
+  setListOfArticles:(listofArticles:{ 
+    content?: string | null;
+    tags?: string; // JSON string, can be parsed into a Tag object
+    metadata?: string; // JSON string, can be parsed into Metadata object
+    description?: string | null;
+    date_to?: string | null; // ISO 8601 date string or null
+    category?: string; // JSON string, can be parsed into a Category object
+    entry_to_force?: string; // ISO 8601 date string
+    publication_date?: string; // ISO 8601 date string
+    date?: string; // ISO 8601 date string
+    hearing_date?: string; // ISO 8601 date string
+  }[]) => void;
   setRatings:(ratings:any) => void;
   setSelectedUser:(selectedUser:string) => void;
   filterQuery: FilterQuery; 
